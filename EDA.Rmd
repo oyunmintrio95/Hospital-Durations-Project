@@ -1,0 +1,173 @@
+---
+title: "Hospital Duration EDA"
+author: "Hayoung Cheon"
+date: "2025-02-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the data
+```{r}
+setwd("C:/Users/oyunm/Desktop/SMU/DS-6372-Applied-Statistics/Project 1")
+hospital <- read.csv("HospitalDurations.csv");
+
+head(hospital)
+summary(hospital)
+str(hospital)
+
+nrow(hospital)
+```
+
+## DATA Description
+There are `113` observations in the data.
+There are 12 variables in total. Except for hospital ID which doesn't have any meaning as a predictor, There are 9 numerical variables and 2 categorical variables.
+The response variable is Lengh of stay, `Lgth.of.sty`.  
+| Numerical Variable | Caegorical Variable |
+|--------------------|---------------------|
+| Length of Stay     | Medical School Affiliation(1=Yes, 2=No)  |
+| Infecion risk      | Region(1=NE, 2=NC, 3=S, 4=W )  | 
+| Routine culturing ratio|                  |
+| Routine chest X-ray ratio|                  |
+| Number of beds     |                  |
+| Average Daily census|                  |
+| Number of nurses   |                  |
+| Available facilies |                  |
+
+
+
+# Check for missing data
+No missing DATA?
+```{r}
+library(naniar)
+vis_miss(hospital)
+```
+
+# boxplots for each variables
+```{r}
+library(ggplot2)
+
+# Create a loop that displays all variables of boxplots except for ID.
+for (i in 2:12) {
+  # Ensure the column index is valid
+  if (i <= ncol(hospital)) {
+    p <- ggplot(hospital, aes(x = "", y = hospital[[i]])) + 
+      geom_boxplot() + 
+      labs(y = colnames(hospital)[i], x = "") +
+      ggtitle(paste("Boxplot of", colnames(hospital)[i])) +
+      theme_minimal()
+    
+    print(p)
+  }
+}
+
+
+```
+
+# Scatter plot of Length of stay vs. all other numerical predictors.
+```{r}
+# Create a data set that dropped categorical variables and ID
+hospital2 <- hospital[, -c(8, 9)]
+summary(hospital2)
+
+# Create a loop that displays all variables of boxplots except for ID.
+for (i in 2:10) {
+  # Ensure the column index is valid
+  if (i <= ncol(hospital2)) {
+    p <- ggplot(hospital2, aes(x = hospital2[[i]], y = hospital2$Lgth.of.Sty )) + 
+      geom_point() + 
+      labs(x = colnames(hospital2)[i], y = "Length of Stay") +
+      ggtitle(paste("a scatterplot of", colnames(hospital2)[i])) +
+      theme_minimal()
+    
+    print(p) 
+  }
+}
+
+```
+
+# Boxplot of Length of stay vs. categorical variables.
+1) Med.Sc.Aff vs Lgth.of.sty: hospitals tha doesn't have medical school affiliation has a lower mean of length of stay. However, there are only 17 count for medical school affiliation and 96 that doesn't have medical school affiliation.
+2) 
+```{r}
+#Med.Sc.Aff vs Lgth.of.Sty
+ggplot(hospital, aes(x = as.factor(Med.Sc.Aff), y = Lgth.of.Sty, fill = as.factor(Med.Sc.Aff))) +
+  geom_boxplot() +
+  labs(x = "Medical School Affiliation", 
+       y = "Length of Stay", 
+       title = "A Boxplot of Medical School Affiliation vs Length of Stay") +
+  theme_classic()
+
+
+table(hospital$Med.Sc.Aff)
+
+#Region vs Lgth.of.Sty
+ggplot(hospital, aes(x = as.factor(Region), y = Lgth.of.Sty, fill = as.factor(Region))) +
+  geom_boxplot() +
+  labs(x = "Region", 
+       y = "Length of Stay", 
+       title = "A Boxplot of Region vs Length of Stay") +
+  theme_classic()
+
+
+table(hospital$Region)
+
+```
+
+# ggpair to check correlation and multicollinearity
+```{r}
+library(GGally)
+ggpairs(hospital)
+```
+
+# Correlation matrix
+The Infection Risk has the highest correlation with Length of stay, Region the next, Average Daily Census, then Rouine chest x-ray ratio.
+Among variables, 
+- `Avg.Pat`&`Avg.Nur`&`Pc.Ser.Fac` are highly correlated.
+- `N.Beds` & `Avg.pat` & `Avg.Nur` are highly correlated.
+
+```{r}
+library(ggcorrplot)
+
+# Compute correlation matrix
+cor_matrix <- cor(hospital[, sapply(hospital, is.numeric)], use = "complete.obs")
+
+# Plot using ggcorrplot
+ggcorrplot(cor_matrix, 
+           method = "square", 
+           type = "lower",
+           lab = TRUE, 
+           lab_size = 3, 
+           colors = c("blue", "white", "red"),
+           title = "Correlation Matrix of Hospital Data",
+           ggtheme = theme_minimal())
+
+```
+
+# Residual plots for each plot.
+Inf.Risk has constant variance issue?
+`Inf.Risk`
+`R.CX.ray.Rat`
+`Avg.Nur`
+
+Influential point: 112 or 47
+
+```{r}
+
+for (i in 2:12) {
+  # Ensure the column index is valid
+  if (i <= ncol(hospital)) {
+   model <- lm(Lgth.of.Sty ~ hospital[[i]], data=hospital)
+   par(mfrow=c(2,2))
+   p <- plot(model)
+  
+  }
+}
+```
+
+# Find detail of Influential point
+```{r}
+
+```
